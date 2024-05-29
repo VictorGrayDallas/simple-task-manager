@@ -4,6 +4,9 @@ import json
 from pathlib import Path
 import sys
 
+def error(err: str):
+	print(f'Error: {err}', file=sys.stderr)
+
 def get_file() -> Path:
 	dir = Path(Path.home(), '.simpletasks')
 	dir.mkdir(exist_ok=True)
@@ -20,10 +23,10 @@ def get_tasks() -> dict | None:
 		contents = file.read_text('utf8') if file.exists else '{}'
 		tasks = json.loads(contents)
 	except FileNotFoundError:
-		print(f'Error: Could not read data file {file.absolute()}')
+		error(f'Could not read data file {file.absolute()}')
 		return None
 	except json.decoder.JSONDecodeError:
-		print(f'Error: Unable to parse data file {file.absolute()}')
+		error(f'Unable to parse data file {file.absolute()}')
 		valid = False
 	# Validate
 	valid = type(tasks) == dict # TODO: More rigorous testing? Validation should only matter if the user has manually modified the file.
@@ -40,12 +43,12 @@ def get_tasks() -> dict | None:
 
 def add(tasks: dict, args: list[str]) -> bool:
 	if len(args) < 1:
-		print('Error: No task name given.')
+		error('No task name given.')
 		return False
 	task_name = args[0]
 	# Ensure this task doesn't already exist.
 	if task_name in tasks:
-		print(f'Error: Task {task_name} already exists.')
+		error(f'Task {task_name} already exists.')
 		return False
 	# Combine all remaining args for the description.
 	description = ' '.join(args[1:]) if len(args) > 1 else 'no description'
@@ -54,22 +57,22 @@ def add(tasks: dict, args: list[str]) -> bool:
 
 def delete(tasks: dict, args: list[str]) -> bool:
 	if len(args) < 1:
-		print('Error: No task name given.')
+		error('No task name given.')
 		return False
 	if len(args) > 1:
-		print('Error: Unexpected arguments after task name.')
+		error('Unexpected arguments after task name.')
 		return False
 	task_name = args[0]
 	if task_name in tasks:
 		del tasks[args[0]]
 		return True
 	else:
-		print(f'Error: task {task_name} does not exist.')
+		error(f'task {task_name} does not exist.')
 		return False
 
 def main(args: list[str]):
 	if len(args) == 0:
-		print('Error: No arguments.')
+		error('No arguments.')
 		return
 
 	tasks = get_tasks()
