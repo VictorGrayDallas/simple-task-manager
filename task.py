@@ -87,15 +87,63 @@ def delete(tasks: dict, args: list[str]) -> bool:
 		return False
 	
 def list_tasks(tasks: dict, args: list[str]) -> bool:
-	# Show completed tasks first
+	# List options:
+	# -i for case-insensitive filter
+	case_sensitive = not '-i' in args
+	# Filter
+	filter = []
+	for arg in args:
+		if not arg.startswith('-'):
+			filter.append(arg if case_sensitive else arg.lower())
+	# -t: filter by title only
+	title_only = '-t' in args
+ 	# -a for ascending, -d for descending, default no sort
+	order = ''
+	if '-a' in args:
+		order = 'a'
+	elif '-d' in args:
+		order = 'd'
+	# -m: mixed, do not show completed tasks first
+	mixed = '-m' in args
+
+	tasks_to_display = []
+	# Filter
 	for t in tasks:
-		task = tasks[t]
-		if task.get('c'):
-			print(f'[COMPLETED] {t}: {task["d"]}')
-	for t in tasks:
-		task = tasks[t]
-		if not task.get('c'):
-			print(f'{t}: {task["d"]}')
+		task = dict(**tasks[t]) # list_tasks should not modify original task list: we will modify task
+		text_for_filter = t if case_sensitive else t.lower()
+		if not title_only:
+			text_for_filter += task['d'] if case_sensitive else task['d'].lower()
+		match = len(filter) == 0 # If no filter, everything matches.
+		for filter_str in filter:
+			if filter_str in text_for_filter:
+				match = True
+				break
+		if match:
+			task['title'] = t
+			task['c'] = bool(task.get('c')) # Ensures key exists
+			tasks_to_display.append(task)
+
+	# Sort, by completed status (if not using -m) then by title (if using a sort order)
+	if order != '':
+		reversed = order == 'a'
+		if mixed:
+			tasks_to_display = sorted(tasks_to_display, key=lambda t: t['d'], reverse=reversed)
+		else:
+			# We use a tuple as the key so it will sort by completed status first (first element of the tuple), then description.
+			tasks_to_display = sorted(tasks_to_display, key=lambda t: (not t['c'] ^ reversed, t['d']), reverse=reversed)
+	elif not mixed:
+		# We use the negation of completion status as the key to sort completed tasks first.
+		tasks_to_display = sorted(tasks_to_display, key=lambda t: not t['c'])
+
+	# Show
+	if len(tasks_to_display) == 0:
+		print('No tasks to display.')
+	for task in tasks_to_display:
+		if task['c']:
+			print(f'[COMPLETED] {task["title"]}: {task["d"]}')
+		else:
+			print(f'{task["title"]}: {task["d"]}')
+
 	return False
 
 def update(tasks: dict, args: list[str]) -> bool:
