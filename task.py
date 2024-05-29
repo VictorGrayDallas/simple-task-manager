@@ -87,8 +87,15 @@ def delete(tasks: dict, args: list[str]) -> bool:
 		return False
 	
 def list_tasks(tasks: dict, args: list[str]) -> bool:
+	# Show completed tasks first
 	for t in tasks:
-		print(f'{t}: {tasks[t]["d"]}')
+		task = tasks[t]
+		if task.get('c'):
+			print(f'[COMPLETED] {t}: {task["d"]}')
+	for t in tasks:
+		task = tasks[t]
+		if not task.get('c'):
+			print(f'{t}: {task["d"]}')
 	return False
 
 def update(tasks: dict, args: list[str]) -> bool:
@@ -135,6 +142,8 @@ def show_help(a, b):
 Available commands:
 add: Add a new task, optionally include a description.
 	Example: task add [title] [task description]
+complete: Mark a task as completed.
+	Example: task complete [title]
 delete: Delete an existing task.
 	Example: task delete [title]
 edit: Modify an existing task.
@@ -147,6 +156,22 @@ For all commands, to include spaces in title, or multiple adjacent spaces in des
 """)
 	return False
 
+def complete(tasks: dict, args: list[str]) -> bool:
+	if len(args) < 1:
+		error('No task name given. Example usage: task complete [title]')
+		return False
+	if len(args) > 1:
+		error('Unexpected arguments after task name. If your task name contains a space, wrap it in quotes: "task title"')
+		return False
+	task_name = args[0]
+	if task_name in tasks:
+		tasks[args[0]]['c'] = True
+		return True
+	else:
+		error(f'task {task_name} does not exist.')
+		return False
+
+
 # Map command-line commands to functions that handle them.
 arg_handlers = {
 	'list': list_tasks,
@@ -154,6 +179,7 @@ arg_handlers = {
 	'delete': delete,
 	'edit': update,
 	'help': show_help,
+	'complete': complete,
 }
 def main(args: list[str]):
 	if len(args) == 0:
