@@ -7,6 +7,14 @@ import sys
 def error(err: str):
 	print(f'Error: {err}', file=sys.stderr)
 
+def index(text, substr) -> int:
+	"""The default str.index method throws an exception if the substring isn't found.
+	Returning -1 is so much nicer."""
+	try:
+		return text.index(substr)
+	except ValueError:
+		return -1
+
 def get_file() -> Path:
 	dir = Path(Path.home(), '.simpletasks')
 	dir.mkdir(exist_ok=True)
@@ -41,6 +49,11 @@ def get_tasks() -> dict | None:
 			return None
 	return tasks
 
+def make_task(description: str) -> dict:
+	if len(description) == 0:
+		description = 'no description'
+	return { 'd': description }
+
 def add(tasks: dict, args: list[str]) -> bool:
 	if len(args) < 1:
 		error('No task name given.')
@@ -51,8 +64,7 @@ def add(tasks: dict, args: list[str]) -> bool:
 		error(f'Task {task_name} already exists.')
 		return False
 	# Combine all remaining args for the description.
-	description = ' '.join(args[1:]) if len(args) > 1 else 'no description'
-	tasks[task_name] = { 'd': description }
+	tasks[task_name] = make_task(' '.join(args[1:]))
 	return True
 
 def delete(tasks: dict, args: list[str]) -> bool:
@@ -75,11 +87,51 @@ def list_tasks(tasks: dict, args: list[str]) -> bool:
 		print(f'{t}: {tasks[t]["d"]}')
 	return True
 
+def update(tasks: dict, args: list[str]) -> bool:
+	if len(args) < 1:
+		error('No task name given.')
+		return False
+	task_name = args[0]
+	if task_name not in tasks:
+		error(f'task {task_name} does not exist.')
+		return False
+	
+	# Two options for how to modify task.
+	# Option 1: Just a new description
+	# Option 2: Specify new title with -t and description with -d
+	all_args = ' '.join(args)
+	dash_t = index(all_args, ' -t ')
+	dash_d = index(all_args, ' -d ')
+	if dash_t != -1:
+		end_index = len(all_args) if dash_d < dash_t else dash_d
+		new_title = all_args[dash_t + 4:end_index]
+	else:
+		new_title = None
+	if dash_d != -1:
+		end_index = len(all_args) if dash_t < dash_d else dash_t
+		new_description = all_args[dash_d + 4:end_index]
+	else:
+		# Edge case: If command ended with -d, it has no space after
+		if args[-1] == '-d':
+			new_description = ''
+		else:
+			new_description = ' '.join(args[1:])
+	
+	if new_title is not None:
+		if new_title in tasks:
+			error(f'Task {task_name} already exists.')
+			return False
+		del tasks[task_name]
+		task_name = new_title
+	tasks[task_name] = make_task(new_description)
+	return True
+
 # Map command-line commands to functions that handle them.
 arg_handlers = {
 	'list': list_tasks,
 	'add': add,
 	'delete': delete,
+	'edit': update,
 }
 def main(args: list[str]):
 	if len(args) == 0:
