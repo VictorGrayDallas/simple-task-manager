@@ -52,6 +52,21 @@ def add(tasks: dict, args: list[str]) -> bool:
 	tasks[task_name] = { 'd': description }
 	return True
 
+def delete(tasks: dict, args: list[str]) -> bool:
+	if len(args) < 1:
+		print('Error: No task name given.')
+		return False
+	if len(args) > 1:
+		print('Error: Unexpected arguments after task name.')
+		return False
+	task_name = args[0]
+	if task_name in tasks:
+		del tasks[args[0]]
+		return True
+	else:
+		print(f'Error: task {task_name} does not exist.')
+		return False
+
 def main(args: list[str]):
 	if len(args) == 0:
 		print('Error: No arguments.')
@@ -67,6 +82,9 @@ def main(args: list[str]):
 				print(f'{t}: {tasks[t]["d"]}')
 		case 'add':
 			if add(tasks, args[1:]):
+				save(tasks)
+		case 'delete':
+			if delete(tasks, args[1:]):
 				save(tasks)
 		case _:
 			print('default')
