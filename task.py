@@ -56,7 +56,7 @@ def make_task(description: str) -> dict:
 
 def add(tasks: dict, args: list[str]) -> bool:
 	if len(args) < 1:
-		error('No task name given.')
+		error('No task name given. Example usage: task add [title] [description]')
 		return False
 	task_name = args[0]
 	# Ensure this task doesn't already exist.
@@ -73,10 +73,10 @@ def add(tasks: dict, args: list[str]) -> bool:
 
 def delete(tasks: dict, args: list[str]) -> bool:
 	if len(args) < 1:
-		error('No task name given.')
+		error('No task name given. Example usage: task delete [title]')
 		return False
 	if len(args) > 1:
-		error('Unexpected arguments after task name.')
+		error('Unexpected arguments after task name. If your task name contains a space, wrap it in quotes: "task title"')
 		return False
 	task_name = args[0]
 	if task_name in tasks:
@@ -93,7 +93,7 @@ def list_tasks(tasks: dict, args: list[str]) -> bool:
 
 def update(tasks: dict, args: list[str]) -> bool:
 	if len(args) < 1:
-		error('No task name given.')
+		error('No task name given. Example usage: task update [title] [new description]')
 		return False
 	task_name = args[0]
 	if task_name not in tasks:
@@ -130,12 +130,30 @@ def update(tasks: dict, args: list[str]) -> bool:
 		tasks[task_name] = make_task(new_description)
 		return True
 
+def show_help(a, b):
+	print("""Simple task tracker
+Available commands:
+add: Add a new task, optionally include a description.
+	Example: task add [title] [task description]
+delete: Delete an existing task.
+	Example: task delete [title]
+edit: Modify an existing task.
+	Example: task edit [title] [new description]
+	Or: task edit title -t [new title] -d [new description]
+list: Display all tasks.
+	Example: task list
+
+For all commands, to include spaces in title, or multiple adjacent spaces in description, wrap them in quotes. To include quotes, enter \\"
+""")
+	return False
+
 # Map command-line commands to functions that handle them.
 arg_handlers = {
 	'list': list_tasks,
 	'add': add,
 	'delete': delete,
 	'edit': update,
+	'help': show_help,
 }
 def main(args: list[str]):
 	if len(args) == 0:
