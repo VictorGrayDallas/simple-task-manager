@@ -4,6 +4,9 @@ import json
 from pathlib import Path
 import sys
 
+def save(tasks: dict, file: Path):
+	file.write_text(json.dumps(tasks))
+
 def main(args: list[str]):
 	if len(args) == 0:
 		print('Error: No arguments.')
@@ -40,7 +43,20 @@ def main(args: list[str]):
 	match args[0]:
 		case 'list':
 			for t in tasks:
-				print(f'{t}: {tasks[t]}')
+				print(f'{t}: {tasks[t]["d"]}')
+		case 'add':
+			if len(args) < 2:
+				print('Error: No task name given.')
+				return
+			task_name = args[1]
+			# Ensure this task doesn't already exist.
+			if task_name in tasks:
+				print(f'Error: Task {task_name} already exists.')
+				return
+			# Combine all remaining args for the description.
+			description = ' '.join(args[2::]) if len(args) > 2 else 'no description'
+			tasks[task_name] = { 'd': description }
+			save(tasks, file)
 		case _:
 			print('default')
 
