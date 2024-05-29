@@ -28,7 +28,7 @@ def get_tasks() -> dict | None:
 	# Load and parse
 	valid = True
 	try:
-		contents = file.read_text('utf8') if file.exists else '{}'
+		contents = file.read_text('utf8') if file.exists() else '{}'
 		tasks = json.loads(contents)
 	except FileNotFoundError:
 		error(f'Could not read data file {file.absolute()}')
