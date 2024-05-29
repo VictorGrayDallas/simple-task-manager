@@ -63,6 +63,10 @@ def add(tasks: dict, args: list[str]) -> bool:
 	if task_name in tasks:
 		error(f'Task {task_name} already exists.')
 		return False
+	# Ensure task name is a visible string
+	if task_name.isspace():
+		error('task name cannot be empty')
+		return False
 	# Combine all remaining args for the description.
 	tasks[task_name] = make_task(' '.join(args[1:]))
 	return True
@@ -118,13 +122,13 @@ def update(tasks: dict, args: list[str]) -> bool:
 			new_description = ' '.join(args[1:])
 	
 	if new_title is not None:
-		if new_title in tasks:
-			error(f'Task {task_name} already exists.')
-			return False
-		del tasks[task_name]
-		task_name = new_title
-	tasks[task_name] = make_task(new_description)
-	return True
+		result = add(tasks, [new_title, new_description]) # new title may already exist
+		if result:
+			del tasks[task_name]
+		return result
+	else:
+		tasks[task_name] = make_task(new_description)
+		return True
 
 # Map command-line commands to functions that handle them.
 arg_handlers = {
