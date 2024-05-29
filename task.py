@@ -50,8 +50,6 @@ def get_tasks() -> dict | None:
 	return tasks
 
 def make_task(description: str) -> dict:
-	if len(description) == 0:
-		description = 'no description'
 	return { 'd': description }
 
 def add(tasks: dict, args: list[str]) -> bool:
@@ -121,6 +119,8 @@ def list_tasks(tasks: dict, args: list[str]) -> bool:
 		if match:
 			task['title'] = t
 			task['c'] = bool(task.get('c')) # Ensures key exists
+			if len(task['d']) == 0:
+				task['d'] = 'no description'
 			tasks_to_display.append(task)
 
 	# Sort, by completed status (if not using -m) then by title (if using a sort order)
