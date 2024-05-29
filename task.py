@@ -89,7 +89,7 @@ def delete(tasks: dict, args: list[str]) -> bool:
 def list_tasks(tasks: dict, args: list[str]) -> bool:
 	for t in tasks:
 		print(f'{t}: {tasks[t]["d"]}')
-	return True
+	return False
 
 def update(tasks: dict, args: list[str]) -> bool:
 	if len(args) < 1:
