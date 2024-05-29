@@ -69,7 +69,18 @@ def delete(tasks: dict, args: list[str]) -> bool:
 	else:
 		error(f'task {task_name} does not exist.')
 		return False
+	
+def list_tasks(tasks: dict, args: list[str]) -> bool:
+	for t in tasks:
+		print(f'{t}: {tasks[t]["d"]}')
+	return True
 
+# Map command-line commands to functions that handle them.
+arg_handlers = {
+	'list': list_tasks,
+	'add': add,
+	'delete': delete,
+}
 def main(args: list[str]):
 	if len(args) == 0:
 		error('No arguments.')
@@ -79,18 +90,14 @@ def main(args: list[str]):
 	if tasks is None:
 		return
 
-	match args[0]:
-		case 'list':
-			for t in tasks:
-				print(f'{t}: {tasks[t]["d"]}')
-		case 'add':
-			if add(tasks, args[1:]):
-				save(tasks)
-		case 'delete':
-			if delete(tasks, args[1:]):
-				save(tasks)
-		case _:
-			print('default')
+	# Check if we have a function to handle the given command.
+	if args[0] in arg_handlers:
+		handler = arg_handlers[args[0]]
+		# handler should return True if the tasks object was modified
+		if handler(tasks, args[1:]):
+			save(tasks)
+	else:
+		error(f'Unknown command {args[0]}')
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
