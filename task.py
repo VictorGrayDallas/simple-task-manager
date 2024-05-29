@@ -7,6 +7,24 @@ import sys
 def error(err: str):
 	print(f'Error: {err}', file=sys.stderr)
 
+def error_bad_name(tasks: dict, name: str):
+	"""Check if the given name almost matches a task."""
+	# First, we will check for case-mismatch
+	lower_name = name.lower()
+	for t in tasks:
+		if t.lower() == lower_name:
+			error(f'task {name} does not exist. Did you mean {t}?')
+			return
+	# Next, we use difflib to find close matches
+	import difflib
+	results = difflib.get_close_matches(name, tasks.keys())
+	if len(results) == 1:
+		error(f'task {name} does not exist. Did you mean {results[0]}?')
+	elif len(results) > 1:
+		error(f'task {name} does not exist. Did you mean one of these: {results}?')
+	else:
+		error(f'task {name} does not exist.')
+
 def index(text, substr) -> int:
 	"""The default str.index method throws an exception if the substring isn't found.
 	Returning -1 is so much nicer."""
@@ -81,7 +99,7 @@ def delete(tasks: dict, args: list[str]) -> bool:
 		del tasks[args[0]]
 		return True
 	else:
-		error(f'task {task_name} does not exist.')
+		error_bad_name(tasks, task_name)
 		return False
 	
 def list_tasks(tasks: dict, args: list[str]) -> bool:
@@ -152,7 +170,7 @@ def update(tasks: dict, args: list[str]) -> bool:
 		return False
 	task_name = args[0]
 	if task_name not in tasks:
-		error(f'task {task_name} does not exist.')
+		error_bad_name(tasks, task_name)
 		return False
 	
 	# Two options for how to modify task.
@@ -216,9 +234,8 @@ def complete(tasks: dict, args: list[str]) -> bool:
 		tasks[args[0]]['c'] = True
 		return True
 	else:
-		error(f'task {task_name} does not exist.')
+		error_bad_name(tasks, task_name)
 		return False
-
 
 # Map command-line commands to functions that handle them.
 arg_handlers = {
